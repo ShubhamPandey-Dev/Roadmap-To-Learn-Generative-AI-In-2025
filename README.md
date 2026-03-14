@@ -1,66 +1,390 @@
-# Roadmap To Learn Generative AI In 2025
+import json
+from turtle import clear
+from ollama import Client
 
-## Prerequisites
+client = Client()
+import json
+import re
 
-## 1. Python Programming Language -1 Month Basics
-#### Python:
-![python-logo-master-v3-TM-flattened](https://user-images.githubusercontent.com/20041231/211717885-0b1e049b-f5b3-457d-ba7a-9345ec3aa39c.png)
 
-1. Complete Python Playlist In English: [![YouTube](https://img.shields.io/badge/YouTube-Video-green)](https://www.youtube.com/watch?v=bPrmA1SEN2k&list=PLZoTAELRMXVNUL99R4bDlVYsncUNvwUBB)
+# -----------------------------
+# Load Data
+# -----------------------------
 
-2. Complete Python Playlist In Hindi:   [![YouTube](https://img.shields.io/badge/YouTube-Video-green)](https://www.youtube.com/watch?v=MJd9d9Mpxg0&list=PLTDARY42LDV4qqiJd1Z1tShm3mp9-rP4v)
+with open("ApprovalRule.json") as f:
+    data = json.load(f)
 
-3. Flask Playlist:    [![YouTube](https://img.shields.io/badge/YouTube-Video-green)](https://www.youtube.com/watch?v=4L_xAWDRs7w&list=PLZoTAELRMXVPBaLN3e-uoVRR9hlRFRfUc)
+with open("Quote.json") as f:
+    quote = json.load(f)
 
-4. Fast API Tutorials [![YouTube](https://img.shields.io/badge/YouTube-Video-green)](https://www.youtube.com/watch?v=WU65u9d-97c&list=PLZoTAELRMXVPgsojPOHF9i0u2L83-m9P7)
+with open("QuoteLine.json") as f:
+    quote_lines = json.load(f)
 
-## 2. Basic Machine Learning Natural Language Processing (Day 1 - Day 5) [![YouTube](https://img.shields.io/badge/YouTube-Video-green)](https://www.youtube.com/watch?v=w3coRFpyddQ&list=PLZoTAELRMXVNNrHSKv36Lr3_156yCo6Nn)
-1. Why NLP?
-2. One hot Encoding, Bag Of Words,
-3. TFIDF
-4. Word2vec,AvgWord2vec
 
-## 3. Basic Deep Learning Concepts (Day 1- Day 5) [![YouTube](https://img.shields.io/badge/YouTube-Video-green)](https://www.youtube.com/watch?v=8arGWdq_KL0&list=PLZoTAELRMXVPiyueAqA_eQnsycC_DSBns)
+# Fix export structure
+if isinstance(quote, list):
+    quote = quote[0]
 
-1. ANN - Working Of MultiLayered Neural Network
-2. Forward Propogation, Backward Propogation
-3. Activation Functions, Loss Functions
-4. Optimizers
+if not isinstance(quote_lines, list):
+    quote_lines = [quote_lines]
 
-## 4. Advanced NLP Concepts (Day 6 - Last Video) [![YouTube](https://img.shields.io/badge/YouTube-Video-green)](https://www.youtube.com/watch?v=ZwYtqTaZ2io&list=PLZoTAELRMXVNNrHSKv36Lr3_156yCo6Nn&index=8)
-1. RNN, LSTM RNN
-2. GRU RNN
-3. Bidirection LSTM RNN
-4. Encoder Decoder, Attention is all you need ,Seq to Seq 
-5. Transformers
 
-## 5. Starting the Journey Towards Generative AI (GPT4,Mistral 7B, LLAMA, Hugging Face Open Source LLM Models,Google Palm Model)
-1. Generative Tutorials [![YouTube](https://img.shields.io/badge/documentation-link-green)](https://python.langchain.com/docs/get_started/introduction) [![YouTube](https://img.shields.io/badge/YouTube-Video-red)](https://www.youtube.com/watch?v=HEHUpBO8UVc&list=PLA1lVIthbM1D5I6r5uY2K89X1KD2w5LNh)
+rules = data["rules"]
 
-2. Generative Tutorials With AWS [![YouTube](https://img.shields.io/badge/documentation-link-green)](https://python.langchain.com/docs/get_started/introduction) [![YouTube](https://img.shields.io/badge/YouTube-Video-red)](https://www.youtube.com/watch?v=2WOa4_3Bgtw&list=PLZoTAELRMXVP5zpBfH7pab4aB1LbmCM1z&pp=gAQB)
-3. Generative Tutorials With Azure [![YouTube](https://img.shields.io/badge/documentation-link-green)](https://python.langchain.com/docs/get_started/introduction) [![YouTube](https://img.shields.io/badge/YouTube-Video-red)](https://www.youtube.com/watch?v=3SRh2nzN2DM)
-4. Genertaive AI With Google Gemini Playlist: [![YouTube](https://img.shields.io/badge/YouTube-Video-green)](https://www.youtube.com/watch?v=CC6qMpqgUMU&list=PLZoTAELRMXVNbDmGZlcgCA3a8mRQp5axb)
-5. Finetuning LLM [![YouTube](https://img.shields.io/badge/YouTube-Video-green)](https://www.youtube.com/watch?v=6S59Y0ckTm4&list=PLZoTAELRMXVN9VbAx5I2VvloTtYmlApe3)
 
-## 5. Vector Databases And Vector Stores
+# -----------------------------
+# Helpers
+# -----------------------------
+def normalize(v):
 
-1. ChromaDB
-2. FAISS vector database, which makes use of the Facebook AI Similarity Search (FAISS) library
-3. LanceDB vector database based on the Lance data format
-4. Cassandra DB For storing Vectors
+    if v is None:
+        return None
 
-## 6. Deployment Of LLM Projects
+    if isinstance(v, bool):
+        return v
 
-1. AWS
-2. Azure
-3. LangSmith
-4. LangServe
-5. HuggingFace Spaces
+    v = str(v).strip().lower()
+
+    if v in ["true", "1"]:
+        return True
+
+    if v in ["false", "0"]:
+        return False
+
+    return v
 
 
 
+def evaluate_operator(actual, operator, expected):
+
+    actual = normalize(actual)
+    expected = normalize(expected)
+
+    if operator == "equals":
+        return actual == expected
+
+    if operator == "not equals":
+        return actual != expected
+
+    if operator == "contains":
+        if actual is None:
+            return False
+        return str(expected).lower() in str(actual).lower()
+
+    if operator == "does not contain":
+        if actual is None:
+            return True
+        return str(expected).lower() not in str(actual).lower()
+
+    return False
 
 
 
+def safe_float(v):
+    try:
+        return float(v)
+    except:
+        return 0
 
 
+# -----------------------------
+# Operator evaluation
+# -----------------------------
+
+def normalize_bool(v):
+    if isinstance(v, bool):
+        return v
+    if v is None:
+        return None
+    v = str(v).lower().strip()
+    if v in ["true", "1"]:
+        return True
+    if v in ["false", "0"]:
+        return False
+    return v
+
+
+def evaluate_operator(actual, operator, expected):
+
+    actual = normalize_bool(actual)
+    expected = normalize_bool(expected)
+
+    if operator == "equals":
+        return actual == expected
+
+    if operator == "not equals":
+        return actual != expected
+
+    if operator == "contains":
+        if actual is None:
+            return False
+        return str(expected).lower() in str(actual).lower()
+
+    if operator == "does not contain":
+        if actual is None:
+            return True
+        return str(expected).lower() not in str(actual).lower()
+
+    try:
+        actual_f = float(actual)
+        expected_f = float(expected)
+    except:
+        return False
+
+    if operator == "greater than":
+        return actual_f > expected_f
+
+    if operator == "less than":
+        return actual_f < expected_f
+
+    if operator == "greater or equals":
+        return actual_f >= expected_f
+
+    if operator == "less or equals":
+        return actual_f <= expected_f
+
+    return False
+# -----------------------------
+# Filter evaluation
+# -----------------------------
+def evaluate_filter(line, cond):
+
+    field = cond.get("filter_field")
+    operator = cond.get("filter_operator")
+    value = cond.get("filter_value")
+
+    if not field:
+        return True
+
+    actual = line.get(field)
+    print(actual)
+
+    if actual is None:
+        return False
+
+    actual = str(actual).lower().strip()
+    value = str(value).lower().strip()
+    print('oper,', operator)
+
+    if operator == "contains":
+        
+        return value in actual
+
+    if operator == "equals":
+        return actual == value
+
+    if operator == "not equals":
+        return actual != value
+   
+
+    return False
+# -----------------------------
+# Approval variable evaluator
+# -----------------------------
+def evaluate_variable(cond):
+
+    filtered_lines = []
+
+    for line in quote_lines:
+
+        if evaluate_filter(line, cond):
+            filtered_lines.append(line)
+
+    print("Filtered lines:", len(filtered_lines))
+
+    values = [
+        safe_float(l.get(cond["target_field"]))
+        for l in filtered_lines
+    ]
+
+    agg = cond.get("aggregation", "").lower()
+
+    if agg == "sum":
+        result = sum(values)
+
+    elif agg == "count":
+        result = len(filtered_lines)
+
+    elif agg == "max":
+        result = max(values) if values else 0
+
+    elif agg == "min":
+        result = min(values) if values else 0
+
+    else:
+        result = 0
+
+    print("Aggregation Result:", result)
+
+    return evaluate_operator(result, cond["operator"], cond["value"])
+# -----------------------------
+# Field condition evaluator
+# -----------------------------
+
+def evaluate_field(cond):
+
+    field = cond.get("field")
+    operator = cond.get("operator")
+    value = cond.get("value")
+
+    actual = quote.get(field)
+    print("Eval:", actual, operator, value, "->", evaluate_operator(actual, operator, value))
+
+    return evaluate_operator(actual, operator, value)
+
+
+# -----------------------------
+# Condition evaluator
+# -----------------------------
+
+def evaluate_condition(cond):
+    
+
+    if cond["type"] == "field_condition":
+        return evaluate_field(cond)
+
+    if cond["type"] in ["approval_variable", "summary_variable"]:
+        return evaluate_variable(cond)
+
+    return False
+
+
+# -----------------------------
+# Advanced condition evaluator
+# -----------------------------
+
+import re
+
+import re
+
+def evaluate_advanced(condition_results, expression):
+
+    if not expression:
+        return all(condition_results.values())
+
+    expr = expression
+    print("Original Expression:", expr)
+
+    # normalize operators
+    expr = expr.replace("AND", "and").replace("OR", "or")
+
+    # replace condition numbers safely
+    for num, result in condition_results.items():
+
+        expr = re.sub(
+            r'\b{}\b'.format(num),
+            str(result),
+            expr
+        )
+
+        print(mappigDic)
+
+    print("Evaluating:", expr)
+
+    return eval(expr)
+
+
+# -----------------------------
+# Rule evaluation
+# -----------------------------
+triggered_rules = []
+not_triggered_rules = []
+ruleId =''
+
+for rule in rules:
+    ruleId = rule.get("rule_id")
+
+    if len(rule["conditions"]) == 0:
+        not_triggered_rules.append(rule)
+        continue
+
+    print("Rule:", rule["rule_name"])
+
+    # -----------------------------
+    # Remove duplicate conditions
+    # -----------------------------
+    unique_conditions = []
+    seen = set()
+
+    for cond in rule["conditions"]:
+
+        key = (
+            cond.get("field"),
+            cond.get("operator"),
+            cond.get("value"),
+            cond.get("variable_name")
+        )
+
+        if key not in seen:
+            seen.add(key)
+            unique_conditions.append(cond)
+
+    # -----------------------------
+    # Evaluate conditions
+    # -----------------------------
+    condition_results = {}
+    mappigDic = {}
+    count = 0
+
+    for cond in unique_conditions:
+        count += 1
+
+        print("Field:", cond.get("field"))
+        print("Actual:", quote.get(cond.get("field")))
+        print("Expected:", cond.get("value"))
+        condition_number = ruleId + str(count) if rule["conditions_met"] == 'All' else cond.get("condition_number")
+        num = cond.get("condition_number")
+
+        if num is None:
+            num = f"cond_{len(condition_results)+1}"
+
+        result = evaluate_condition(cond)
+
+    
+        condition_results[condition_number] = result
+        print("Condition Results:", condition_results)
+
+    # -----------------------------
+    # Evaluate rule logic
+    # -----------------------------
+    if rule["conditions_met"] == "All":
+        print('f')
+
+        rule_triggered = all(condition_results.values())
+
+    elif rule["conditions_met"] == "Any":
+
+        rule_triggered = any(condition_results.values())
+
+    elif rule["conditions_met"] == "Custom":
+
+        rule_triggered = evaluate_advanced(
+            condition_results,
+            rule["advanced_condition"]
+        )
+        print('r',rule_triggered)
+
+    else:
+        rule_triggered = all(condition_results.values())
+
+    # -----------------------------
+    # Store results
+    # -----------------------------
+    if rule_triggered:
+        triggered_rules.append(rule)
+    else:
+        not_triggered_rules.append(rule)
+
+# -----------------------------
+# Output
+# -----------------------------
+
+print("\nQuote ID:", quote.get("Id"))
+print("Quote Lines:", len(quote_lines))
+
+print("\nTriggered Rules:", len(triggered_rules))
+
+for r in triggered_rules:
+    print("-", r["rule_name"])
+
+print("\nNot Triggered Rules:", len(not_triggered_rules))
